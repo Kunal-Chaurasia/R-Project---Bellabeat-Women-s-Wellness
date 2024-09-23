@@ -1,0 +1,214 @@
+---
+title: "BellaBeat Women Fitness Analysis"
+author: "Kunal"
+date: "2024-08-13"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+## Company Description
+
+Bellabeat, a high-tech manufacturer of health-focused products for women.
+
+Bellabeat is a successful small company, but they have the potential to become a larger player in the global smart device market. Urška Sršen, cofounder and Chief Creative Officer of Bellabeat, believes that analyzing smart device fitness data could help unlock new growth opportunities for the company
+
+## Analysis Key Points
+
+* What are some trends in smart device usage?
+* How could these trends apply to Bellabeat customers?
+* How could these trends help influence Bellabeat marketing strategy
+
+## Business directive
+
+Identify potential opportunities for growth and recommendations for the Bellabeat marketing strategy improvement based on trends in smart device usage.
+
+## Loading Packages
+
+```{r Packages}
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+## Importing Dataset
+
+```{r Dataset}
+daily_activities <- read.csv("Daily Activities.csv")
+hourly_intensity <- read.csv("Hourly Intensity.csv")
+hourly_calories <- read.csv("Hourly Calories.csv")
+sleep_data <- read.csv("Sleep Data.csv")
+weight_log <- read.csv("Weight Log.csv")
+```
+
+## Formatting Data Type
+
+```{r Formatting}
+# Daily Activities
+daily_activities$ActivityDate = as.POSIXct(daily_activities$ActivityDate, format = "%m-%d-%Y", tz=Sys.timezone())
+daily_activities$Date = format(daily_activities$ActivityDate, format = "%m/%d/%Y")
+
+# Hourly Intensity
+hourly_intensity$ActivityHour = as.POSIXct(hourly_intensity$ActivityHour, format = "%m/%d/%Y %I:%M:%S %p", tz=Sys.timezone())
+hourly_intensity$Date = format(hourly_intensity$ActivityHour, format = "%m/%d/%Y")
+hourly_intensity$Time = format(hourly_intensity$ActivityHour, format = "%H:%M:%S")
+
+# Hourly Calorie
+hourly_calories$ActivityHour = as.POSIXct(hourly_calories$ActivityHour, format = "%m/%d/%Y %I:%M:%S %p", tz=Sys.timezone())
+hourly_calories$Date = format(hourly_calories$ActivityHour, format = "%m/%d/%Y")
+hourly_calories$Time = format(hourly_calories$ActivityHour, format = "%H:%M:%S")
+
+# Sleep Data
+sleep_data$SleepDay = as.POSIXct(sleep_data$SleepDay, format = "%m/%d/%Y %I:%M:%S %p", tz=Sys.timezone())
+sleep_data$Date = format(sleep_data$SleepDay, format = "%m/%d/%Y")
+
+# Weight Log
+weight_log$Date = as.POSIXct(weight_log$Date, format = "%m/%d/%Y %I:%M:%S %p", tz=Sys.timezone())
+weight_log$Date = format(weight_log$Date, format = "%m/%d/%Y")
+
+```
+
+## Number of IDs
+
+```{r IDs}
+n_distinct(daily_activities$Id)
+n_distinct(hourly_calories$Id)
+n_distinct(hourly_intensity$Id)
+n_distinct(sleep_data$Id)
+n_distinct(weight_log$Id)
+```
+
+## Length of Dataset
+
+```{r No of Rows}
+nrow(daily_activities)
+nrow(hourly_calories)
+nrow(hourly_intensity)
+nrow(sleep_data)
+nrow(weight_log)
+```
+
+## Summarize Dataset
+
+```{r Summary Daily Activities}
+daily_activities %>%
+  select(TotalSteps,
+         TotalDistance,
+         SedentaryMinutes) %>%
+  summary()
+```
+
+* The mean total steps are 7281 which is not adequate for fitness. The company should try to influence customer to to increase their step count. Many data enters are 0 steps, so the the fitness device was not used on those days, while maximum steps are 36019. 
+* Average mean Sedentary time is 992.5 minutes or 16.5 hrs which is very high for general  fitness.
+
+```{r Summary Hourly Calories}
+hourly_calories %>%
+  select(Calories) %>%
+  summary()
+```
+
+* Hourly Calories Burned are averaged at 96. The calories burned while being sedentary are 42. Most of the people were active only for 1/4 of the day because 3rd Quarter and max values are 106 and 948.
+
+```{r Summary Hourly Intensity}
+hourly_intensity %>%
+  select(TotalIntensity) %>%
+  summary()
+```
+
+```{r Summary Sleep Data}
+sleep_data %>% 
+  select(TotalMinutesAsleep,
+         TotalTimeInBed,
+         TotalSleepRecords) %>%
+  summary()
+```
+
+* The average sleep 420 minutes or 7 hours. While Total Time in Bed is almost 40 minutes extra.
+
+```{r Summary Weight Log}
+weight_log %>%
+  select(WeightKg,
+         BMI) %>%
+  summary()
+```
+
+## Insights from Dataset Visualization
+
+Visualization from Daily Activities
+
+```{r Step Count vs Sedentary Time}
+ggplot(data=daily_activities, aes(x=TotalSteps, y=SedentaryMinutes)) + geom_point(color="blue") + geom_smooth() + labs(title="Daily Count vs Sedentary TIme")
+
+```
+
+* There are two Groups of customers have high sedentary time and another one with lower sedentary time. Both Groups are able to perform similiarly while some customers have very high steps count due to high intensity hours.
+
+```{r Steps Count vs Calories}
+ggplot(data=daily_activities, aes(x=TotalSteps, y=Calories, color=Id)) + geom_point() + geom_smooth() +  labs(title="Total Steps vs Calories Burned") + scale_color_viridis_c()
+
+```
+
+* It is expected that Calories burned would increase with increasing step count. However for the same Step Count, there is variation of Calorie Burned.
+
+```{r Total time asleep vs Total Time in bed}
+ggplot(data=sleep_data) +   geom_point(mapping = aes(x=TotalMinutesAsleep, y=TotalTimeInBed, color=TotalSleepRecords)) +  labs(title="Total Time Asleep vs Total Time in Bed in Minutes") +  scale_color_viridis_c()
+
+```
+
+* Customers who tend to sleep in intervals also tend to sleep more compared to customers who sleep in one intervals.
+
+```{r Very Active Intervals vs Total Calorie burned}
+ggplot(data=daily_activities, aes(x=VeryActiveMinutes, y=Calories, color=TotalSteps)) + geom_point() + geom_smooth() +  labs(title="Total Steps vs Calories Burned") + scale_color_viridis_c()
+
+```
+
+* Customers who have  high very active intervals also have high calories burned and tend to have high step count.
+
+```{r Sedentary Time vs Calories Burned}
+ggplot(data=daily_activities, aes(x=SedentaryMinutes, y=Calories, color=TotalSteps)) + geom_point() + geom_smooth() +  labs(title="Total Steps vs Calories Burned") + scale_color_viridis_c()
+```
+
+* Customers with 8-20 hrs of sedentary tend to have an active lifestyle.
+
+```{r Average Intensity by time of the day}
+intensity_by_hour <- hourly_intensity %>%
+  group_by(Time) %>%
+  drop_na() %>%
+  summarize(mean_intensity = mean(TotalIntensity))
+
+ggplot(data=intensity_by_hour, aes(x=Time, y=mean_intensity)) + geom_histogram(stat = "identity", fill="pink") + theme(axis.text.x = element_text(angle = 90)) + labs(title = "Mean intensity by Hour")
+
+```
+
+* Customers tends to have high intensity between 9 AM to 7 PM. 
+* Customer's Active lifestyle starts from 5-8 AM depending on their career and ends around 8-11 PM.
+
+```{r Merged Sleep and daily Activity}
+combined_activities_sleep <- merge(daily_activities, sleep_data, by= c("Id", "Date"))
+
+ggplot(data=combined_activities_sleep, aes(x=VeryActiveMinutes, y=TotalMinutesAsleep, color=Calories)) + geom_point() + geom_smooth() + labs(title = "Very Active Duration vs Sleep Time") + scale_color_viridis_c()
+
+```
+
+* Customers with high intensity intervals and calorie count also tend to Sleep more to recover their fatigue.
+* Majority of customers have low intervals of high intensity tend to sleep more.
+
+```{r Sedentary time vs Total time Asleep}
+ggplot(data=combined_activities_sleep, aes(x=SedentaryMinutes, y=TotalMinutesAsleep, color=TotalSteps)) + geom_point() + geom_smooth() + labs(title = "Sedentary Duration vs Sleep Time") + scale_color_viridis_c()
+
+```
+
+* Customers who tend to have high sedentary time, also tend to sleep less because there is no cause of fatique.
+* Customers with high step count also tend to sleep less compared to customers with low step count.
+
+```{r Merged activity and weight log}
+combined_activities_weight <- merge(daily_activities, weight_log, by= "Id")
+
+ggplot(data=combined_activities_weight, aes(x=TotalSteps, y=Calories, color=WeightKg)) + geom_point() + geom_smooth() + labs(title="Total Steps vs Calories Burned")
+
+```
+
+* Customers with higher weight also burn more calories for the same step counts.
